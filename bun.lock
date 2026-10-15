@@ -63,7 +63,7 @@
     },
     "packages/platform": {
       "name": "@nestbun/platform",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "dependencies": {
         "cors": "^2.8.6",
         "path-to-regexp": "^8.4.2",
