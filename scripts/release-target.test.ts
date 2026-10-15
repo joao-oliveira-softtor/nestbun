@@ -4,6 +4,7 @@ import {
   releaseBlocker,
   releaseTarget,
   renameFor,
+  renameReadme,
   stagedManifest,
 } from './release-target.js';
 
@@ -93,5 +94,26 @@ describe('isPublished', () => {
   });
   test('publica quando o npm devolve outra versão', () => {
     expect(isPublished(0, '0.1.2\n', '0.2.0')).toBe(false);
+  });
+});
+
+describe('renameReadme', () => {
+  const from = '@nestbun/platform';
+  const to = '@softtor/nestbun-platform';
+  test('troca todas as ocorrências do nome original', () => {
+    const readme = `bun add ${from}\nimport { BunAdapter } from '${from}';\n\`${from}/sub\``;
+    expect(renameReadme(readme, from, to)).toBe(
+      `bun add ${to}\nimport { BunAdapter } from '${to}';\n\`${to}/sub\``,
+    );
+  });
+  test('não altera nada quando o nome não aparece', () => {
+    expect(renameReadme('sem nome aqui', from, to)).toBe('sem nome aqui');
+  });
+  test('regra: não troca quando o nome é prefixo de outro pacote (seguido de [A-Za-z0-9_-])', () => {
+    const readme = `${from}-extra ${from}2 ${from}_x ${from}`;
+    expect(renameReadme(readme, from, to)).toBe(`${from}-extra ${from}2 ${from}_x ${to}`);
+  });
+  test('fim de frase e fim de texto contam como fronteira', () => {
+    expect(renameReadme(`Use ${from}. ${from}`, from, to)).toBe(`Use ${to}. ${to}`);
   });
 });

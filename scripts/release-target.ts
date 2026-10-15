@@ -47,3 +47,13 @@ export function stagedManifest<T extends Manifest>(pkg: T, name: string) {
 export function isPublished(exitCode: number, stdout: string, version: string): boolean {
   return exitCode === 0 && stdout.trim() === version;
 }
+
+/**
+ * Rewrites the package name in a README for a renamed publish. An occurrence followed by
+ * [A-Za-z0-9_-] is another package that merely shares the prefix (`@scope/pkg-extra`) and stays.
+ */
+export function renameReadme(readme: string, from: string, to: string): string {
+  return readme.replaceAll(from, (match, offset: number, whole: string) =>
+    /[A-Za-z0-9_-]/.test(whole[offset + match.length] ?? '') ? match : to,
+  );
+}

@@ -7,7 +7,7 @@
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isPublished, renameFor, stagedManifest } from './release-target.js';
+import { isPublished, renameFor, renameReadme, stagedManifest } from './release-target.js';
 
 const root = join(import.meta.dirname, '..', 'packages');
 const dryRun = process.argv.includes('--dry-run');
@@ -52,6 +52,9 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
         join(stage, 'package.json'),
         JSON.stringify(stagedManifest(pkg, name), null, 2),
       );
+      // The README tells readers to install and import the original name; point it at the new one.
+      const readme = join(stage, 'README.md');
+      await writeFile(readme, renameReadme(await readFile(readme, 'utf8'), pkg.name, name));
       cwd = stage;
     }
 
