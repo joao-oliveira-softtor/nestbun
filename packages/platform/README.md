@@ -60,8 +60,8 @@ Requires Bun ≥ 1.4 and NestJS ≥ 12. In a monorepo, keep a `tsconfig.json` at
 | Security hooks (`useSecurityHeaders`, `enableCsrfProtection`) | ✅ via `AbstractHttpAdapter` |
 | `trustProxy` (`req.ip`, `req.ips`, `req.protocol`, `req.host` via `X-Forwarded-*`) | ✅ |
 | WebSocket gateways | ⏳ planned as `@nestbun/ws` |
-| Multipart / `@UploadedFile()` | ⏳ planned |
-| Multipart via `req.native.formData()` (Web `Request`, limite por `serve.maxRequestBodySize`) | ✅ |
+| Multipart via the `@UploadedFile()` decorator | ⏳ planned |
+| Multipart via `req.native.formData()` (Web `Request`, limit via `serve.maxRequestBodySize`) | ✅ |
 
 ### Ecosystem packages
 
