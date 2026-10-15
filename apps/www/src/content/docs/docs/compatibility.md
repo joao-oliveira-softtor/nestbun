@@ -24,8 +24,10 @@ Every ✅ row has an integration test in `packages/platform/test` that boots a r
 | `httpsOptions`, `forceCloseConnections`, `return503OnClosing`, graceful shutdown | ✅ |
 | Unix socket listen | ✅ |
 | Security hooks (`useSecurityHeaders`, `enableCsrfProtection`) | ✅ via `AbstractHttpAdapter` |
+| `trustProxy` (`req.ip`, `req.ips`, `req.protocol`, `req.host` via `X-Forwarded-*`) | ✅ |
 | WebSocket gateways | ⏳ planned as `@nestbun/ws` |
 | Multipart / `@UploadedFile()` | ⏳ planned |
+| Multipart via `req.native.formData()` (Web `Request`, limite por `serve.maxRequestBodySize`) | ✅ |
 
 ## Ecosystem packages
 
