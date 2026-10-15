@@ -38,25 +38,29 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 
   let cwd = dir;
   let stage: string | undefined;
-  if (name !== pkg.name) {
-    // Runs from a staged copy: no scripts (prepublishOnly would rebuild outside the workspace)
-    // and no devDependencies. dist/ was already built and tested by the release workflow.
-    stage = await mkdtemp(join(tmpdir(), 'publish-'));
-    // A missing entry of "files" (e.g. dist/ not built) must fail, not publish an empty tarball.
-    for (const file of new Set(['package.json', 'README.md', ...(pkg.files ?? [])])) {
-      await cp(join(dir, file), join(stage, file), { recursive: true });
+  let exit: number;
+  try {
+    if (name !== pkg.name) {
+      // Runs from a staged copy: no scripts (prepublishOnly would rebuild outside the workspace)
+      // and no devDependencies. dist/ was already built and tested by the release workflow.
+      stage = await mkdtemp(join(tmpdir(), 'publish-'));
+      // A missing entry of "files" (e.g. dist/ not built) must fail, not publish an empty tarball.
+      for (const file of new Set(['package.json', 'README.md', ...(pkg.files ?? [])])) {
+        await cp(join(dir, file), join(stage, file), { recursive: true });
+      }
+      await writeFile(
+        join(stage, 'package.json'),
+        JSON.stringify(stagedManifest(pkg, name), null, 2),
+      );
+      cwd = stage;
     }
-    await writeFile(
-      join(stage, 'package.json'),
-      JSON.stringify(stagedManifest(pkg, name), null, 2),
-    );
-    cwd = stage;
-  }
 
-  console.log(`${dryRun ? 'dry-run ' : 'publish '}${name}@${pkg.version}`);
-  const cmd = dryRun ? ['npm', 'pack', '--dry-run'] : ['bun', 'publish', '--access', 'public'];
-  const proc = Bun.spawn(cmd, { cwd, stdout: 'inherit', stderr: 'inherit' });
-  const exit = await proc.exited;
-  if (stage) await rm(stage, { recursive: true, force: true });
+    console.log(`${dryRun ? 'dry-run ' : 'publish '}${name}@${pkg.version}`);
+    const cmd = dryRun ? ['npm', 'pack', '--dry-run'] : ['bun', 'publish', '--access', 'public'];
+    exit = await Bun.spawn(cmd, { cwd, stdout: 'inherit', stderr: 'inherit' }).exited;
+  } finally {
+    // Also runs when the copy throws, so the staged manifest and README never linger in /tmp.
+    if (stage) await rm(stage, { recursive: true, force: true });
+  }
   if (exit !== 0) process.exit(1);
 }

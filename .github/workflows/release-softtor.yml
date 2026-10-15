@@ -12,6 +12,22 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "require('./packages/platform/package.json').version")
+          if [ "${TAG#softtor-v}" != "$version" ]; then
+            echo "::error::Tag $TAG does not match packages/platform/package.json version $version"
+            exit 1
+          fi
+          git fetch origin softtor
+          if ! git merge-base --is-ancestor HEAD origin/softtor; then
+            echo "::error::Tag $TAG points at a commit that is not on the softtor branch"
+            exit 1
+          fi
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run test
