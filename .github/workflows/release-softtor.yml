@@ -1,0 +1,42 @@
+name: Release (softtor)
+# Publishes @softtor/nestbun-platform when a tag like softtor-v0.2.0 is pushed to the fork.
+# Requires the NPM_TOKEN repository secret for the @softtor scope.
+on:
+  push:
+    tags: ['softtor-v*']
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "require('./packages/platform/package.json').version")
+          if [ "${TAG#softtor-v}" != "$version" ]; then
+            echo "::error::Tag $TAG does not match packages/platform/package.json version $version"
+            exit 1
+          fi
+          git fetch origin softtor
+          if ! git merge-base --is-ancestor HEAD origin/softtor; then
+            echo "::error::Tag $TAG points at a commit that is not on the softtor branch"
+            exit 1
+          fi
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build
+      - name: Publish the renamed package
+        run: bun run scripts/publish.ts
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PUBLISH_RENAME: '@nestbun/platform=@softtor/nestbun-platform'
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

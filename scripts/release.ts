@@ -8,11 +8,13 @@
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { releaseBlocker, releaseTarget } from './release-target.js';
 
 const root = join(import.meta.dirname, '..');
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const bump = args.find((arg) => !arg.startsWith('--'));
+const target = releaseTarget(process.env);
 
 function fail(message: string): never {
   console.error(`release: ${message}`);
@@ -33,10 +35,6 @@ function run(...cmd: string[]): void {
 const parse = (version: string) => version.split('.').map(Number) as [number, number, number];
 
 if (!bump) fail('usage: bun run release <patch|minor|major|x.y.z> [--dry-run]');
-if (!dryRun) {
-  if (git('branch', '--show-current') !== 'main') fail('switch to main first');
-  if (git('status', '--porcelain')) fail('working tree is not clean');
-}
 
 const packages: { file: string; json: { name: string; version: string; private?: boolean } }[] = [];
 for (const entry of await readdir(join(root, 'packages'), { withFileTypes: true })) {
@@ -61,8 +59,18 @@ const next =
         : bump;
 if (!/^\d+\.\d+\.\d+$/.test(next)) fail(`"${bump}" is not patch, minor, major or x.y.z`);
 if (Bun.semver.order(next, current) <= 0) fail(`${next} is not newer than ${current}`);
-const tag = `v${next}`;
-if (git('tag', '--list', tag)) fail(`tag ${tag} already exists`);
+const tag = `${target.tagPrefix}${next}`;
+const blocker = releaseBlocker(
+  {
+    dryRun,
+    branch: git('branch', '--show-current'),
+    dirty: git('status', '--porcelain') !== '',
+    tagExists: git('tag', '--list', tag) !== '',
+    tag,
+  },
+  target,
+);
+if (blocker) fail(blocker);
 
 const [nextMajor, nextMinor] = parse(next);
 const platformRange = `^${nextMajor}.${nextMinor}.0`;
@@ -75,7 +83,9 @@ if (!pinned.test(scaffoldSource))
 for (const pkg of packages) console.log(`${pkg.json.name}  ${pkg.json.version} → ${next}`);
 console.log(`PLATFORM_VERSION → ${platformRange}`);
 if (dryRun) {
-  console.log(`dry run: would commit "chore(release): ${tag}", tag ${tag} and push`);
+  console.log(
+    `dry run: would commit "chore(release): ${tag}", tag ${tag} and push ${target.branch} to ${target.remote}`,
+  );
   process.exit(0);
 }
 
@@ -93,10 +103,14 @@ git('add', '-A');
 git('commit', '-m', `chore(release): ${tag}`);
 git('tag', tag);
 
-if (prompt(`Push main and ${tag}? This publishes to npm. [y/N]`)?.toLowerCase() !== 'y') {
-  console.log(`Not pushed. Publish later with: git push origin main ${tag}`);
+if (
+  prompt(
+    `Push ${target.branch} and ${tag} to ${target.remote}? This publishes to npm. [y/N]`,
+  )?.toLowerCase() !== 'y'
+) {
+  console.log(`Not pushed. Publish later with: git push ${target.remote} ${target.branch} ${tag}`);
   console.log(`Undo with: git tag -d ${tag} && git reset --hard HEAD~1`);
   process.exit(0);
 }
-run('git', 'push', 'origin', 'main', tag);
-console.log(`Pushed ${tag}: https://github.com/mguay22/nestbun/actions/workflows/release.yml`);
+run('git', 'push', target.remote, target.branch, tag);
+console.log(`Pushed ${tag} to ${target.remote}`);

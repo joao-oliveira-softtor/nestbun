@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, softtor]
   pull_request:
   schedule:
     - cron: '0 6 * * 1' # weekly: catch NestJS/Bun releases that break the adapter

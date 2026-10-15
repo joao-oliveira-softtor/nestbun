@@ -1,11 +1,16 @@
 /**
  * Publish each public package in packages/* whose (name, version) is not on npm yet.
- * Used by the Release workflow; also fine to run locally after `npm login`.
+ * With PUBLISH_RENAME ("from=to"), the package is published from a temporary copy whose
+ * manifest carries the new name; the repository's package.json is never touched.
+ * Pass --dry-run to print what would be published (npm pack --dry-run) without publishing.
  */
-import { readdir, readFile } from 'node:fs/promises';
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { isPublished, renameFor, renameReadme, stagedManifest } from './release-target.js';
 
 const root = join(import.meta.dirname, '..', 'packages');
+const dryRun = process.argv.includes('--dry-run');
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
@@ -14,25 +19,51 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
     name: string;
     version: string;
     private?: boolean;
+    files?: string[];
+    scripts?: unknown;
+    devDependencies?: unknown;
   };
   if (pkg.private) continue;
 
-  const view = Bun.spawn(['npm', 'view', `${pkg.name}@${pkg.version}`, 'version'], {
+  const name = renameFor(pkg.name, process.env);
+  const view = Bun.spawn(['npm', 'view', `${name}@${pkg.version}`, 'version'], {
     stdout: 'pipe',
     stderr: 'pipe',
   });
-  const published =
-    (await view.exited) === 0 && (await new Response(view.stdout).text()).trim() === pkg.version;
-  if (published) {
-    console.log(`skip    ${pkg.name}@${pkg.version} (already on npm)`);
+  const code = await view.exited;
+  if (isPublished(code, await new Response(view.stdout).text(), pkg.version)) {
+    console.log(`skip    ${name}@${pkg.version} (already on npm)`);
     continue;
   }
 
-  console.log(`publish ${pkg.name}@${pkg.version}`);
-  const proc = Bun.spawn(['bun', 'publish', '--access', 'public'], {
-    cwd: dir,
-    stdout: 'inherit',
-    stderr: 'inherit',
-  });
-  if ((await proc.exited) !== 0) process.exit(1);
+  let cwd = dir;
+  let stage: string | undefined;
+  let exit: number;
+  try {
+    if (name !== pkg.name) {
+      // Runs from a staged copy: no scripts (prepublishOnly would rebuild outside the workspace)
+      // and no devDependencies. dist/ was already built and tested by the release workflow.
+      stage = await mkdtemp(join(tmpdir(), 'publish-'));
+      // A missing entry of "files" (e.g. dist/ not built) must fail, not publish an empty tarball.
+      for (const file of new Set(['package.json', 'README.md', ...(pkg.files ?? [])])) {
+        await cp(join(dir, file), join(stage, file), { recursive: true });
+      }
+      await writeFile(
+        join(stage, 'package.json'),
+        JSON.stringify(stagedManifest(pkg, name), null, 2),
+      );
+      // The README tells readers to install and import the original name; point it at the new one.
+      const readme = join(stage, 'README.md');
+      await writeFile(readme, renameReadme(await readFile(readme, 'utf8'), pkg.name, name));
+      cwd = stage;
+    }
+
+    console.log(`${dryRun ? 'dry-run ' : 'publish '}${name}@${pkg.version}`);
+    const cmd = dryRun ? ['npm', 'pack', '--dry-run'] : ['bun', 'publish', '--access', 'public'];
+    exit = await Bun.spawn(cmd, { cwd, stdout: 'inherit', stderr: 'inherit' }).exited;
+  } finally {
+    // Also runs when the copy throws, so the staged manifest and README never linger in /tmp.
+    if (stage) await rm(stage, { recursive: true, force: true });
+  }
+  if (exit !== 0) process.exit(1);
 }
