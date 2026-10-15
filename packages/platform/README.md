@@ -39,29 +39,47 @@ Requires Bun ≥ 1.4 and NestJS ≥ 12. In a monorepo, keep a `tsconfig.json` at
 
 ## What works
 
+### NestJS features
+
 | Feature | Status |
 |---|---|
 | Routing, params, wildcards, `@All`, HEAD → GET fallback | ✅ |
 | `@Body` / `@Query` / `@Param` / `@Headers` / `@Ip` / `@Req` / `@Res` / `@Next` | ✅ |
-| JSON + urlencoded body parsing, `rawBody: true`, `bodyParser: false`, `useBodyParser('text' \| 'raw')`, size limits (413) | ✅ |
-| Exception filters, 404/500 shapes identical to Express | ✅ |
+| JSON + urlencoded parsing, `rawBody`, `bodyParser: false`, `useBodyParser('text' \| 'raw')`, 413 limits | ✅ |
+| Exception filters, 404 / 500 shapes identical to Express | ✅ |
 | Nest middleware (`MiddlewareConsumer`, `forRoutes`, `exclude`, method-scoped), `app.use()`, `next(err)` | ✅ |
-| Global prefix with `exclude`, URI / header / media-type / custom versioning | ✅ |
-| CORS (`app.enableCors`) via the `cors` package | ✅ |
-| `@Redirect`, `@Header`, `@HttpCode`, `res.cookie()` / `clearCookie()`, Nest `setCookie` | ✅ |
-| Server-Sent Events (`@Sse`) with disconnect detection | ✅ |
+| Global prefix with `exclude`; URI / header / media-type / custom versioning | ✅ |
+| CORS (`app.enableCors`) | ✅ |
+| `@Redirect`, `@Header`, `@HttpCode`, `res.cookie()` / `clearCookie()`, `setCookie` | ✅ |
+| Server-Sent Events with disconnect detection | ✅ |
 | `StreamableFile`, manual `res.write()` streaming | ✅ |
-| Static assets (`useStaticAssets`) with ETag / Last-Modified / 304 | ✅ |
-| View engines: `ejs`, `hbs`, `pug`, or any `{ render(file, data) }` | ✅ |
-| `@nestjs/swagger` | ✅ |
-| `@nestjs/throttler`, `@nestjs/terminus`, `@nestjs/passport` + `passport-jwt`, `helmet`, `cookie-parser` | ✅ |
+| Static assets with ETag / Last-Modified / 304 | ✅ |
+| View engines: `ejs`, `hbs`, `pug`, custom `render()` | ✅ |
 | `httpsOptions`, `forceCloseConnections`, `return503OnClosing`, graceful shutdown | ✅ |
-| Unix socket listen (`app.listen('/tmp/app.sock')`) | ✅ |
-| `@nestjs/testing` (`createNestApplication(new BunAdapter())`) | ✅ |
+| Unix socket listen | ✅ |
+| Security hooks (`useSecurityHeaders`, `enableCsrfProtection`) | ✅ via `AbstractHttpAdapter` |
+| `trustProxy` (`req.ip`, `req.ips`, `req.protocol`, `req.host` via `X-Forwarded-*`) | ✅ |
 | WebSocket gateways | ⏳ planned as `@nestbun/ws` |
-| Multipart / `@UploadedFile()` | ⏳ planned |
-| Arbitrary Express middleware | ⚠️ works when it only uses `req.headers/body/query`, `res.setHeader/status/end/json`. Anything mounting sub-routers or rewriting `req.url` will not. |
-| supertest | ❌ use `adapter.fetch()` |
+| Multipart via the `@UploadedFile()` decorator | ⏳ planned |
+| Multipart via `req.native.formData()` (Web `Request`, limit via `serve.maxRequestBodySize`) | ✅ |
+
+### Ecosystem packages
+
+| Package | Status |
+|---|---|
+| `@nestjs/testing` | ✅ `createNestApplication(new BunAdapter())` |
+| `@nestjs/swagger` | ✅ UI, JSON, YAML and assets |
+| `@nestjs/throttler` | ✅ `ThrottlerGuard`, `X-RateLimit-*` / `Retry-After` headers, `@SkipThrottle()` |
+| `@nestjs/terminus` | ✅ `@HealthCheck()`: 200 when up, 503 with details when down |
+| `@nestjs/passport` + `passport-jwt` | ✅ `AuthGuard('jwt')`, `req.user` |
+| `helmet` | ✅ `app.use(helmet())` |
+| `cookie-parser` | ✅ `app.use(cookieParser(secret))`, `req.cookies` / `req.signedCookies` |
+| `cors` | ✅ used internally |
+| `@nestjs/serve-static` | ⚠️ untested; use `useStaticAssets` |
+| `@nestjs/platform-socket.io`, `@nestjs/platform-ws` | ❌ attach to a Node server (the adapter logs a warning when one does); wait for `@nestbun/ws` |
+| `supertest` | ❌ use `adapter.fetch()` |
+| `multer` / `@nestjs/platform-express` interceptors | ❌ Express-only |
+| Arbitrary Express middleware | ⚠️ see [Differences from Express](https://mguay22.github.io/nestbun/docs/differences-from-express/) |
 
 ## Options
 
