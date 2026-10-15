@@ -8,7 +8,7 @@
     "bench"
   ],
   "scripts": {
-    "test": "bun test packages/platform packages/create/test",
+    "test": "bun test packages/platform packages/create/test scripts",
     "typecheck": "bun run --filter '@nestbun/platform' --filter '@nestbun/create' --filter '@nestbun/example-basic' typecheck",
     "build": "bun run --filter '@nestbun/platform' --filter '@nestbun/create' --filter '@nestbun/www' build",
     "lint": "oxlint --deny-warnings",
