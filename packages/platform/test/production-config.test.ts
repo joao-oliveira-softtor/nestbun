@@ -73,7 +73,8 @@ describe('adapter options combined as in a production app', () => {
       '/card/tokenize',
       jsonInit('POST', { data: 'x' }, { 'x-forwarded-for': '203.0.113.7' }),
     );
-    expect(res.body.ip).not.toBe('203.0.113.7');
+    expect(res.status).toBe(201);
+    expect(res.body.ip).toMatch(/^(127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/);
   });
 
   test('bodyLimit and serve.maxRequestBodySize at 10 MiB: under passes, over answers 413', async () => {
