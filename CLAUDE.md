@@ -69,7 +69,7 @@ The goal is behavior identical to `@nestjs/platform-express` (Express 5) unless 
 
 ## Conventions
 
-- **Tests.** Adapter behavior gets an integration test in `packages/platform/test` that boots a real Nest app on `BunAdapter` and asserts what a client observes (helpers in `test/helpers.ts`; `swagger.test.ts` is the pattern for ecosystem packages). Generator changes get a test in `packages/create/test`.
+- **Tests.** Adapter behavior gets an integration test in `packages/platform/test` that boots a real Nest app on `BunAdapter` and asserts what a client observes (helpers in `test/helpers.ts`; `swagger.test.ts` is the pattern for ecosystem packages). Generator changes get a test in `packages/create/test`. Build Nest WebSocket adapters in tests from `app.getHttpServer()`, not `app`: a new workspace package can add another `@nestjs/core` copy to the isolated linker, and `AbstractWsAdapter`'s `instanceof NestApplication` then fails.
 - **Compatibility table.** Every ✅ row has a test behind it. A new row goes in both `apps/www/src/content/docs/docs/compatibility.md` and `packages/platform/README.md`.
 - **Docs.** User-visible changes update the pages in `apps/www/src/content/docs/docs/`. The root `README.md` is for users; contributor material goes in `CONTRIBUTING.md`.
 - **Dependencies.** Keep the adapter's runtime dependencies minimal (currently `cors`, `path-to-regexp`). `@nestbun/socket.io` adds `@socket.io/bun-engine` (0.x), pinned exactly: bump it deliberately. Pin dev dependencies exactly (`bun add -d -E`) and commit `bun.lock`; CI installs with `--frozen-lockfile`. NestJS is pinned in `packages/platform`, `packages/ws`, `packages/socket.io`, `examples/basic`, `bench` and `packages/create/templates`: bump them together.
@@ -87,5 +87,7 @@ The goal is behavior identical to `@nestjs/platform-express` (Express 5) unless 
 ## Releasing
 
 `bun run release <patch|minor|major|x.y.z>` on a clean `main`: bumps every public package to the same version, builds, tests, commits `chore(release): vX.Y.Z`, tags, and asks before pushing. The pushed tag triggers `release.yml`, which publishes to npm and creates a GitHub release with generated notes. Pushing a `v*` tag publishes, so never push one without being asked.
+
+A new public package needs a `README.md` (the renamed publish copies it), its filter in the root `test`/`typecheck`/`build` scripts, and its pair in `PUBLISH_RENAME` (`release-softtor.yml`).
 
 Fork releases (`@softtor/nestbun-platform`, tags `softtor-vX.Y.Z`), upstream sync (merge commit, not squash) and the PRs carried from upstream are in `CONTRIBUTING.md` ("The Softtor fork"). `bun run release` without the `RELEASE_*` variables targets `origin/main` and the `v` prefix: never push a `v*` tag to the fork.
