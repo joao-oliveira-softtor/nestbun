@@ -163,6 +163,9 @@ export class BunWsAdapter extends AbstractWsAdapter<any, any> {
         // An unserializable reply (cycle, BigInt, deep nesting) must drop only itself: an error
         // thrown in the observer would surface as an unhandled RxJS error and can kill the process.
         try {
+          // shortcut: send() returns -1 (backpressure) or 0 (dropped) and is not handled; use the
+          // websocket backpressureLimit/closeOnBackpressureLimit options, and add drain handling if
+          // a gateway streams large volumes.
           client.send(JSON.stringify(response));
         } catch (err) {
           this.logger.error(err);
@@ -199,8 +202,9 @@ export class BunWsAdapter extends AbstractWsAdapter<any, any> {
     if (!message || !handler) return EMPTY;
     try {
       return transform(handler.callback(message.data, message.event));
-    } catch {
-      // A synchronous throw would tear down this client's stream.
+    } catch (err) {
+      // A synchronous throw would tear down this client's stream; log it and keep the stream.
+      this.logger.error(err);
       return EMPTY;
     }
   }
