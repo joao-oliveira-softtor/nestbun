@@ -112,7 +112,11 @@ if (pinScaffold) {
   );
 }
 
-run('bun', 'install'); // bun.lock records workspace versions
+// `bun install` records the new workspace versions but leaves the peer ranges of the workspaces
+// stale in bun.lock, and the Bun canary then rejects --frozen-lockfile.
+const lockFile = join(root, 'bun.lock');
+await writeFile(lockFile, bumpInternalDeps(await readFile(lockFile, 'utf8'), names, next));
+run('bun', 'install');
 run('bun', 'run', 'build');
 run('bun', 'run', 'test');
 
