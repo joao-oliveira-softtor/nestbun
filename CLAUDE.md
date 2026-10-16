@@ -76,10 +76,12 @@ The goal is behavior identical to `@nestjs/platform-express` (Express 5) unless 
 ## Git workflow
 
 - All changes land through pull requests, never direct pushes to `main`: release notes are generated from merged PRs.
-- Branch off `main`, open a PR, squash-merge.
+- Branch off `main`, open a PR, squash-merge. In the Softtor fork (`fork` remote, `joao-oliveira-softtor/nestbun`) branch off `fork/softtor` and open PRs against `softtor`; `main` only mirrors upstream.
 - Commits and PR titles follow Conventional Commits: `type(scope): summary`, with scope one of `platform`, `create`, `www`, `bench` when it applies. Example: `fix(platform): honor bodyLimit on urlencoded bodies`. A `commit-msg` hook (commitlint) enforces it; a `pre-commit` hook lints and formats staged files.
 - PRs from first-time fork contributors show no checks until a maintainer approves the workflow run.
 
 ## Releasing
 
 `bun run release <patch|minor|major|x.y.z>` on a clean `main`: bumps both packages to the same version, builds, tests, commits `chore(release): vX.Y.Z`, tags, and asks before pushing. The pushed tag triggers `release.yml`, which publishes to npm and creates a GitHub release with generated notes. Pushing a `v*` tag publishes, so never push one without being asked.
+
+Fork releases (`@softtor/nestbun-platform`, tags `softtor-vX.Y.Z`), upstream sync (merge commit, not squash) and the PRs carried from upstream are in `CONTRIBUTING.md` ("The Softtor fork"). `bun run release` without the `RELEASE_*` variables targets `origin/main` and the `v` prefix: never push a `v*` tag to the fork.
