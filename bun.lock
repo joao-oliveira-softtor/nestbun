@@ -63,7 +63,7 @@
     },
     "packages/platform": {
       "name": "@nestbun/platform",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "cors": "^2.8.6",
         "path-to-regexp": "^8.4.2",
@@ -100,7 +100,7 @@
     },
     "packages/socket.io": {
       "name": "@nestbun/socket.io",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@socket.io/bun-engine": "0.1.2",
       },
@@ -128,7 +128,7 @@
     },
     "packages/ws": {
       "name": "@nestbun/ws",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "devDependencies": {
         "@nestbun/platform": "workspace:*",
         "@nestjs/common": "12.1.0",
