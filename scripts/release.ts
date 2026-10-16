@@ -2,7 +2,8 @@
  * Cut a release: bun run release <patch|minor|major|x.y.z> [--dry-run]
  *
  * Bumps every public package in packages/* to the same new version, points the generator
- * at the new adapter (PLATFORM_VERSION), commits, tags vX.Y.Z and, after a confirmation,
+ * at the new adapter (PLATFORM_VERSION, only when @nestbun/create is released too),
+ * commits, tags vX.Y.Z and, after a confirmation,
  * pushes. The pushed tag triggers the Release workflow, which publishes to npm (it needs
  * the NPM_TOKEN repository secret) and creates the GitHub release.
  */
@@ -74,14 +75,22 @@ if (blocker) fail(blocker);
 
 const [nextMajor, nextMinor] = parse(next);
 const platformRange = `^${nextMajor}.${nextMinor}.0`;
+// The generator follows the new adapter only when it ships too. A fork that keeps
+// @nestbun/create private publishes the adapter under another name, so generated projects
+// must keep depending on the upstream @nestbun/platform range.
+const pinScaffold = packages.some((pkg) => pkg.json.name === '@nestbun/create');
 const scaffold = join(root, 'packages/create/src/scaffold.ts');
 const scaffoldSource = await readFile(scaffold, 'utf8');
 const pinned = /PLATFORM_VERSION = '[^']*'/;
-if (!pinned.test(scaffoldSource))
+if (pinScaffold && !pinned.test(scaffoldSource))
   fail('PLATFORM_VERSION not found in packages/create/src/scaffold.ts');
 
 for (const pkg of packages) console.log(`${pkg.json.name}  ${pkg.json.version} → ${next}`);
-console.log(`PLATFORM_VERSION → ${platformRange}`);
+console.log(
+  pinScaffold
+    ? `PLATFORM_VERSION → ${platformRange}`
+    : 'PLATFORM_VERSION unchanged (@nestbun/create is private, not released)',
+);
 if (dryRun) {
   console.log(
     `dry run: would commit "chore(release): ${tag}", tag ${tag} and push ${target.branch} to ${target.remote}`,
@@ -96,7 +105,12 @@ for (const pkg of packages) {
   const bumped = source.replace(/"version": "[^"]*"/, `"version": "${next}"`);
   await writeFile(pkg.file, bumpInternalDeps(bumped, names, next));
 }
-await writeFile(scaffold, scaffoldSource.replace(pinned, `PLATFORM_VERSION = '${platformRange}'`));
+if (pinScaffold) {
+  await writeFile(
+    scaffold,
+    scaffoldSource.replace(pinned, `PLATFORM_VERSION = '${platformRange}'`),
+  );
+}
 
 run('bun', 'install'); // bun.lock records workspace versions
 run('bun', 'run', 'build');
