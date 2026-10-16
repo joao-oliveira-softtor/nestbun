@@ -27,6 +27,7 @@ bun run build       # first: the example type-checks against the adapter's emitt
 
 ```
 packages/platform   the adapter (src/) and its integration tests (test/)
+packages/ws         @nestbun/ws: WebSocket gateways on the HTTP port
 packages/create     the generator; templates/base is the starter it copies
 examples/basic      minimal app: REST + Zod validation + SSE
 bench/              same app on express / fastify / bun adapters
@@ -72,7 +73,7 @@ type(scope): summary
 ```
 
 - **type**: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `revert`, `style`
-- **scope** (optional): `platform`, `create`, `www`, `bench`
+- **scope** (optional): `platform`, `create`, `ws`, `www`, `bench`
 
 ```
 fix(platform): honor bodyLimit on urlencoded bodies
@@ -118,7 +119,7 @@ git fetch fork && git checkout -b sync/upstream-YYYY-MM-DD fork/softtor && git m
 
 Open the PR against `softtor` and merge it with a **merge commit**, not squash: squash drops the ancestry and every later sync conflicts on the same files. On conflicts (for example upstream squash-merged #7–#14), keep the `softtor` side only after `git diff origin/main softtor -- <file>` shows nothing but known fork differences. `git merge --abort` backs out.
 
-### Releasing the fork (`@softtor/nestbun-platform`)
+### Releasing the fork (`@softtor/nestbun-platform`, `@softtor/nestbun-ws`)
 
 `scripts/release.ts` tags the commit on the release branch and pushes branch and tag together, but the tag must sit on the squash commit that lands on `softtor`. `release-softtor.yml` only checks that the tag matches `packages/platform/package.json` and that its commit is an ancestor of `origin/softtor`, so a tag on a commit before the squash is rejected, while a tag on any later `softtor` commit would be published: tag the squash commit itself. So:
 

@@ -75,7 +75,7 @@ More in [Configuration](https://mguay22.github.io/nestbun/docs/configuration/) a
 |---|---|---|
 | [`@nestbun/platform`](./packages/platform) | HTTP adapter running Nest on `Bun.serve()` | ready |
 | [`@nestbun/create`](./packages/create) | `nest new`, but on Bun: `bun create @nestbun my-api` | ready |
-| `@nestbun/ws` | WebSocket gateway adapter on `Bun.serve({ websocket })` | planned |
+| `@nestbun/ws` | WebSocket gateway adapter on `Bun.serve({ websocket })` | ready |
 
 ## Repo layout
 

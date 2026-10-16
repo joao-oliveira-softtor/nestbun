@@ -59,7 +59,7 @@ Requires Bun ≥ 1.4 and NestJS ≥ 12. In a monorepo, keep a `tsconfig.json` at
 | Unix socket listen | ✅ |
 | Security hooks (`useSecurityHeaders`, `enableCsrfProtection`) | ✅ via `AbstractHttpAdapter` |
 | `trustProxy` (`req.ip`, `req.ips`, `req.protocol`, `req.host` via `X-Forwarded-*`) | ✅ |
-| WebSocket gateways | ⏳ planned as `@nestbun/ws` |
+| WebSocket gateways | ✅ [`@nestbun/ws`](https://mguay22.github.io/nestbun/docs/websockets/) (`BunWsAdapter`: one path per gateway, `{ event, data }` messages, pub/sub rooms, `messageParser`) |
 | Multipart via the `@UploadedFile()` decorator | ⏳ planned |
 | Multipart via `req.native.formData()` (Web `Request`, limit via `serve.maxRequestBodySize`) | ✅ |
 
@@ -76,7 +76,7 @@ Requires Bun ≥ 1.4 and NestJS ≥ 12. In a monorepo, keep a `tsconfig.json` at
 | `cookie-parser` | ✅ `app.use(cookieParser(secret))`, `req.cookies` / `req.signedCookies` |
 | `cors` | ✅ used internally |
 | `@nestjs/serve-static` | ⚠️ untested; use `useStaticAssets` |
-| `@nestjs/platform-socket.io`, `@nestjs/platform-ws` | ❌ attach to a Node server (the adapter logs a warning when one does); wait for `@nestbun/ws` |
+| `@nestjs/platform-socket.io`, `@nestjs/platform-ws` | ❌ attach to a Node server (the adapter logs a warning when one does); use `BunWsAdapter` from `@nestbun/ws` instead of `platform-ws`; Socket.IO on the HTTP port is planned |
 | `supertest` | ❌ use `adapter.fetch()` |
 | `multer` / `@nestjs/platform-express` interceptors | ❌ Express-only |
 | Arbitrary Express middleware | ⚠️ see [Differences from Express](https://mguay22.github.io/nestbun/docs/differences-from-express/) |
