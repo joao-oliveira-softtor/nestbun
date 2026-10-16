@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { Server, TLSOptions } from 'bun';
+import type { Server, ServerWebSocket, TLSOptions, WebSocketHandler } from 'bun';
 
 export type FetchHandler = (
   request: Request,
@@ -20,6 +20,28 @@ export interface BunServeOptions {
   shutdownTimeout?: number;
 }
 
+/**
+ * Takes WebSocket upgrades off the request path before Nest's router sees them.
+ * Registered with `BunHttpServer.setUpgradeHook()`; `@nestbun/ws` installs one.
+ */
+export interface BunUpgradeHook {
+  /**
+   * Exact pathname whose requests always go to `fetch`, whatever the method. Without it,
+   * only requests carrying `Upgrade: websocket` do.
+   */
+  path?: string;
+  /**
+   * `true` once `server.upgrade()` succeeded, a `Response` to answer with, or `undefined`
+   * to hand the request to the router.
+   */
+  fetch(
+    request: Request,
+    server: Server<any>,
+  ): Response | true | undefined | Promise<Response | true | undefined>;
+  /** Passed to `Bun.serve({ websocket })`; it owns `ws.data`. */
+  websocket: WebSocketHandler<any>;
+}
+
 export interface ServerAddress {
   address: string;
   family: 'IPv4' | 'IPv6';
@@ -36,6 +58,10 @@ export class BunHttpServer extends EventEmitter {
   bun: Server<unknown> | null = null;
   private unixPath: string | null = null;
   private closing = false;
+  /** Set once shutdown starts, graceful or forced; unlike `closing`, it never adds headers. */
+  private draining = false;
+  private upgradeHook: BunUpgradeHook | null = null;
+  private readonly sockets = new Set<ServerWebSocket<any>>();
 
   constructor(
     private readonly fetchHandler: FetchHandler,
@@ -48,18 +74,66 @@ export class BunHttpServer extends EventEmitter {
     return this.bun !== null;
   }
 
+  /**
+   * Installs the single upgrade hook. It must be set before `listen()`, which hands its
+   * `websocket` handler to `Bun.serve`. Clearing it (`null`) is always allowed: new upgrades
+   * then reach the router, while sockets already open keep their handler.
+   */
+  setUpgradeHook(hook: BunUpgradeHook | null): void {
+    if (hook) {
+      if (this.upgradeHook) throw new Error('An upgrade hook is already registered');
+      if (this.bun) throw new Error('Register the upgrade hook before listen()');
+    }
+    this.upgradeHook = hook;
+  }
+
+  private hookFor(request: Request): BunUpgradeHook | null {
+    const hook = this.upgradeHook;
+    if (!hook || !this.bun) return null;
+    if (hook.path !== undefined) return new URL(request.url).pathname === hook.path ? hook : null;
+    return request.headers.get('upgrade')?.toLowerCase() === 'websocket' ? hook : null;
+  }
+
+  /** Tracks open sockets for shutdown; dispatches to the handler captured at `listen()`. */
+  private dispatcher(handler: WebSocketHandler<any>): WebSocketHandler<any> {
+    return {
+      ...handler,
+      open: (ws) => {
+        this.sockets.add(ws);
+        const opened = handler.open?.(ws);
+        // An async hook may finish upgrading after shutdown swept the open sockets.
+        if (this.draining) ws.close(1001, 'Server shutting down');
+        return opened;
+      },
+      close: (ws, code, reason) => {
+        this.sockets.delete(ws);
+        return handler.close?.(ws, code, reason);
+      },
+    };
+  }
+
   listen(port: number | string, hostname?: string, callback?: (err?: Error) => void): this {
     this.closing = false;
+    this.draining = false;
     if (this.bun) {
       const err = new Error('Server is already listening');
       callback ? callback(err) : this.emit('error', err);
       return this;
     }
     const { shutdownTimeout: _shutdownTimeout, ...serveOptions } = this.options;
+    const websocket = this.upgradeHook && this.dispatcher(this.upgradeHook.websocket);
     const base = {
       idleTimeout: 120,
       ...serveOptions,
+      ...(websocket && { websocket }),
       fetch: async (request: Request, server: Server<unknown>) => {
+        const hook = this.hookFor(request);
+        if (hook) {
+          const handled = await hook.fetch(request, server);
+          // true: the upgrade went through and Bun must get `undefined` back.
+          if (handled === true) return undefined;
+          if (handled) return handled;
+        }
         const response = await this.fetchHandler(request, server);
         // While draining, ask clients to drop their keep-alive connections.
         if (this.closing) {
@@ -123,18 +197,25 @@ export class BunHttpServer extends EventEmitter {
   }
 
   /**
-   * Graceful by default: let in-flight requests finish (up to `shutdownTimeout`),
+   * Graceful by default: close WebSockets with 1001 and let them and in-flight requests
+   * finish (up to `shutdownTimeout`),
    * then stop and drop every connection, including idle keep-alive ones.
    * Bun's `stop(false)` cannot be followed by `stop(true)`, so we wait first.
    * `force` skips the wait.
    */
   private async shutdown(server: Server<unknown>, force: boolean): Promise<void> {
+    // 1001 "going away": stop(true) alone drops WebSockets with 1006 and no close frame.
+    this.draining = true;
+    for (const ws of this.sockets) ws.close(1001, 'Server shutting down');
     if (!force) {
       this.closing = true;
       const deadline = Date.now() + (this.options.shutdownTimeout ?? 10_000);
-      while (server.pendingRequests > 0 && Date.now() < deadline) await Bun.sleep(5);
+      while ((server.pendingRequests > 0 || this.sockets.size > 0) && Date.now() < deadline) {
+        await Bun.sleep(5);
+      }
     }
     await server.stop(true);
+    this.sockets.clear();
   }
 
   /** Destroys in-flight connections (Node's `server.closeAllConnections()`). */
