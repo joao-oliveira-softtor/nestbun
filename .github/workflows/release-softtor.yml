@@ -1,6 +1,6 @@
 name: Release (softtor)
-# Publishes @softtor/nestbun-platform and @softtor/nestbun-ws when a tag like softtor-v0.3.0 is
-# pushed to the fork.
+# Publishes @softtor/nestbun-platform, @softtor/nestbun-ws and @softtor/nestbun-socket.io when a
+# tag like softtor-v0.4.0 is pushed to the fork.
 # Requires the NPM_TOKEN repository secret for the @softtor scope.
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         run: bun run scripts/publish.ts
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PUBLISH_RENAME: '@nestbun/platform=@softtor/nestbun-platform,@nestbun/ws=@softtor/nestbun-ws'
+          PUBLISH_RENAME: '@nestbun/platform=@softtor/nestbun-platform,@nestbun/ws=@softtor/nestbun-ws,@nestbun/socket.io=@softtor/nestbun-socket.io'
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

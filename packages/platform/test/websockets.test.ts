@@ -54,12 +54,15 @@ describe('@nestjs/platform-ws (unsupported)', () => {
     const logger = spyLogger();
     t = await bootstrap(GatewayModule, {
       app: { logger },
-      configure: (app) => app.useWebSocketAdapter(new WsAdapter(app)),
+      // The server, not the app: the adapter tells them apart with `instanceof NestApplication`,
+      // which fails when Bun's isolated linker installs several copies of @nestjs/core.
+      configure: (app) => app.useWebSocketAdapter(new WsAdapter(app.getHttpServer())),
     });
 
     expect(upgradeWarnings(logger)).toHaveLength(1);
     expect(upgradeWarnings(logger)[0]).toContain('@nestjs/platform-ws');
     expect(upgradeWarnings(logger)[0]).toContain('@nestbun/ws');
+    expect(upgradeWarnings(logger)[0]).toContain('@nestbun/socket.io');
     expect((await t.json('/')).body).toEqual({ ok: true });
   });
 
