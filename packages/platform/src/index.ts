@@ -1,7 +1,12 @@
 export { BunAdapter, type BunAdapterOptions } from './adapter.js';
 export { BunRequest, BunSocket } from './request.js';
 export { BunResponse, type CookieOptions } from './response.js';
-export { BunHttpServer, type BunServeOptions, type ServerAddress } from './server.js';
+export {
+  BunHttpServer,
+  type BunServeOptions,
+  type BunUpgradeHook,
+  type ServerAddress,
+} from './server.js';
 export {
   Router,
   type RequestHandler,
