@@ -21,8 +21,7 @@ await app.listen(3000);
 ```
 
 ```ts
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
-import type { BunWsClient } from '@nestbun/ws';
+import { MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 
 @WebSocketGateway({ path: '/events' })
 export class EventsGateway {
@@ -44,6 +43,12 @@ export class EventsGateway {
 - Bun's WebSocket settings go in `new BunWsAdapter(app, { websocket: { maxPayloadLength, idleTimeout, backpressureLimit, closeOnBackpressureLimit, sendPings, perMessageDeflate } })`. Defaults: 16 MiB per message, 120 s idle with pings on.
 
 Not supported: gateways on their own port (`@WebSocketGateway(4000)` throws, everything shares the HTTP port), namespaces (use Socket.IO), acknowledgements (`@Ack()` is Socket.IO only), and backpressure handling beyond Bun's `backpressureLimit`. Socket.IO on the same port is planned on top of the same upgrade hook.
+
+## Security
+
+- Authenticate in `handleConnection(client, request)`: read the token from `request` (header, cookie or query) and `client.close(4401, 'Unauthorized')` when it is missing or invalid. If the check is async, messages that arrive before it finishes still reach handlers; guard message handlers too (for example with a guard).
+- Browsers send cookies on cross-site WebSocket upgrades: when you authenticate with cookies, check `request.headers.get('origin')` against your allowed origins.
+- Bun accepts messages up to 16 MiB by default; on a public socket lower it, e.g. `new BunWsAdapter(app, { websocket: { maxPayloadLength: 64 * 1024 } })`.
 
 ## `WsException` arrives as "Internal server error"
 
