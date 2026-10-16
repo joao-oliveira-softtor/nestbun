@@ -5,12 +5,12 @@ description: What is planned for nestbun after the HTTP adapter.
 
 ## Next
 
-- **`@nestbun/ws`**: a WebSocket gateway adapter on `Bun.serve({ websocket })`, sharing the HTTP port, with Bun's native pub/sub for rooms. Nest's built-in `ws` and Socket.IO adapters attach to a Node server, so this has to be a separate package.
+- **Socket.IO on the HTTP port**: `@nestjs/platform-socket.io` gateways on `Bun.serve` through `@socket.io/bun-engine`, on the same upgrade hook as [`@nestbun/ws`](../websockets/).
 - **Multipart uploads**: `@UploadedFile()` / `@UploadedFiles()` backed by `Request.formData()`, with size and count limits.
 
 ## Later
 
-- Make `--adapter bun` the default in `@nestbun/create` once `@nestbun/ws` and multipart land.
+- Make `--adapter bun` the default in `@nestbun/create` once multipart lands.
 - Backpressure on the streaming path (respect `ReadableStream` `desiredSize`).
 - `@nestjs/serve-static` and `@nestjs/graphql` compatibility passes.
 - HTTP/2 when `Bun.serve` exposes it.

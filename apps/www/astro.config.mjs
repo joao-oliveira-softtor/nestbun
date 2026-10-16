@@ -56,6 +56,7 @@ export default defineConfig({
           items: [
             { label: 'Testing without a port', slug: 'docs/testing' },
             { label: 'Streaming and SSE', slug: 'docs/streaming-and-sse' },
+            { label: 'WebSockets', slug: 'docs/websockets' },
             { label: 'Static files and views', slug: 'docs/static-files-and-views' },
             { label: 'Body parsing', slug: 'docs/body-parsing' },
           ],

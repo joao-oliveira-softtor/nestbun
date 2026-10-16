@@ -25,7 +25,7 @@ Every ✅ row has an integration test in `packages/platform/test` that boots a r
 | Unix socket listen | ✅ |
 | Security hooks (`useSecurityHeaders`, `enableCsrfProtection`) | ✅ via `AbstractHttpAdapter` |
 | `trustProxy` (`req.ip`, `req.ips`, `req.protocol`, `req.host` via `X-Forwarded-*`) | ✅ |
-| WebSocket gateways | ⏳ planned as `@nestbun/ws` |
+| WebSocket gateways | ✅ [`@nestbun/ws`](../websockets/) (`BunWsAdapter`: one path per gateway, `{ event, data }` messages, pub/sub rooms, `messageParser`) |
 | Multipart via the `@UploadedFile()` decorator | ⏳ planned |
 | Multipart via `req.native.formData()` (Web `Request`, limit via `serve.maxRequestBodySize`) | ✅ |
 
@@ -42,7 +42,7 @@ Every ✅ row has an integration test in `packages/platform/test` that boots a r
 | `cookie-parser` | ✅ `app.use(cookieParser(secret))`, `req.cookies` / `req.signedCookies` |
 | `cors` | ✅ used internally |
 | `@nestjs/serve-static` | ⚠️ untested; use `useStaticAssets` |
-| `@nestjs/platform-socket.io`, `@nestjs/platform-ws` | ❌ attach to a Node server (the adapter logs a warning when one does); wait for `@nestbun/ws` |
+| `@nestjs/platform-socket.io`, `@nestjs/platform-ws` | ❌ attach to a Node server (the adapter logs a warning when one does); use `BunWsAdapter` from `@nestbun/ws` instead of `platform-ws`; Socket.IO on the HTTP port is planned |
 | `supertest` | ❌ use `adapter.fetch()` |
 | `multer` / `@nestjs/platform-express` interceptors | ❌ Express-only |
 | Arbitrary Express middleware | ⚠️ see [Differences from Express](../differences-from-express/) |
