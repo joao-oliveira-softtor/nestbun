@@ -73,7 +73,7 @@ The goal is behavior identical to `@nestjs/platform-express` (Express 5) unless 
 - **Dependencies.** Keep the adapter's runtime dependencies minimal (currently `cors`, `path-to-regexp`). Pin dev dependencies exactly (`bun add -d -E`) and commit `bun.lock`; CI installs with `--frozen-lockfile`. NestJS is pinned in `packages/platform`, `packages/ws`, `examples/basic`, `bench` and `packages/create/templates`: bump them together.
 - **Code style.** ESM with `.js` import extensions, Prettier (`.prettierrc`: single quotes, trailing commas, width 100), oxlint (`.oxlintrc.json`). Markdown is not formatted by Prettier. `packages/create/templates` has its own lint and Prettier config and is excluded from the root lint.
 - **TypeScript.** Decorators need `experimentalDecorators`; keep a `tsconfig.json` at the root, since Bun resolves it from the working directory.
-- **Templates.** `templates/base` contains no placeholders; it must stay a runnable project. `PLATFORM_VERSION` in `packages/create/src/scaffold.ts` is the adapter range generated projects depend on (the release script updates it).
+- **Templates.** `templates/base` contains no placeholders; it must stay a runnable project. `PLATFORM_VERSION` in `packages/create/src/scaffold.ts` is the adapter range generated projects depend on (the release script updates it only when `@nestbun/create` is released; the Softtor fork keeps `create` private, so it stays on the upstream range).
 
 ## Git workflow
 
