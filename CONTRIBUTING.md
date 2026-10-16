@@ -113,17 +113,17 @@ Upstream PRs already carried in `softtor` (all are ancestors of the branch):
 
 ```bash
 git fetch origin && git checkout main && git merge --ff-only origin/main && git push fork main
-git checkout -b sync/upstream-YYYY-MM-DD softtor && git merge main   # then run the CI checks
+git fetch fork && git checkout -b sync/upstream-YYYY-MM-DD fork/softtor && git merge main   # then run the CI checks
 ```
 
 Open the PR against `softtor` and merge it with a **merge commit**, not squash: squash drops the ancestry and every later sync conflicts on the same files. On conflicts (for example upstream squash-merged #7–#14), keep the `softtor` side only after `git diff origin/main softtor -- <file>` shows nothing but known fork differences. `git merge --abort` backs out.
 
 ### Releasing the fork (`@softtor/nestbun-platform`)
 
-`scripts/release.ts` tags the commit on the release branch and pushes branch and tag together, but the tag must sit on the squash commit that lands on `softtor` (`release-softtor.yml` rejects any other). So:
+`scripts/release.ts` tags the commit on the release branch and pushes branch and tag together, but the tag must sit on the squash commit that lands on `softtor`. `release-softtor.yml` only checks that the tag matches `packages/platform/package.json` and that its commit is an ancestor of `origin/softtor`, so a tag on a commit before the squash is rejected, while a tag on any later `softtor` commit would be published: tag the squash commit itself. So:
 
 ```bash
-git checkout -b chore/release-X.Y.Z
+git fetch fork && git checkout -b chore/release-X.Y.Z fork/softtor
 RELEASE_REMOTE=fork RELEASE_BRANCH=chore/release-X.Y.Z RELEASE_TAG_PREFIX=softtor-v \
   bun run release <patch|minor|X.Y.Z>        # answer "no" to the push; --dry-run previews
 git tag -d softtor-vX.Y.Z
