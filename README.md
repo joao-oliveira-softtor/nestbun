@@ -75,12 +75,15 @@ More in [Configuration](https://mguay22.github.io/nestbun/docs/configuration/) a
 |---|---|---|
 | [`@nestbun/platform`](./packages/platform) | HTTP adapter running Nest on `Bun.serve()` | ready |
 | [`@nestbun/create`](./packages/create) | `nest new`, but on Bun: `bun create @nestbun my-api` | ready |
-| `@nestbun/ws` | WebSocket gateway adapter on `Bun.serve({ websocket })` | ready |
+| [`@nestbun/ws`](./packages/ws) | WebSocket gateways on `Bun.serve({ websocket })`, on the HTTP port | ready |
+| [`@nestbun/socket.io`](./packages/socket.io) | Socket.IO gateways on `Bun.serve()` through `@socket.io/bun-engine`, on the HTTP port | ready |
 
 ## Repo layout
 
 ```
 packages/platform   the adapter and its integration tests against real Nest apps
+packages/ws         WebSocket gateways (@nestbun/ws)
+packages/socket.io  Socket.IO gateways (@nestbun/socket.io)
 packages/create     the generator (@nestbun/create); templates/base is the starter it copies
 examples/basic      minimal app: REST + Zod validation + SSE
 bench/              same app on express / fastify / bun adapters, one runtime
