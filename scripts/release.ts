@@ -8,7 +8,7 @@
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { releaseBlocker, releaseTarget } from './release-target.js';
+import { bumpInternalDeps, releaseBlocker, releaseTarget } from './release-target.js';
 
 const root = join(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -89,9 +89,12 @@ if (dryRun) {
   process.exit(0);
 }
 
+// Siblings depend on each other at the exact shared version (e.g. @nestbun/ws on @nestbun/platform).
+const names = packages.map((pkg) => pkg.json.name);
 for (const pkg of packages) {
   const source = await readFile(pkg.file, 'utf8');
-  await writeFile(pkg.file, source.replace(/"version": "[^"]*"/, `"version": "${next}"`));
+  const bumped = source.replace(/"version": "[^"]*"/, `"version": "${next}"`);
+  await writeFile(pkg.file, bumpInternalDeps(bumped, names, next));
 }
 await writeFile(scaffold, scaffoldSource.replace(pinned, `PLATFORM_VERSION = '${platformRange}'`));
 

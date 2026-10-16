@@ -1,28 +1,44 @@
 /**
  * Publish each public package in packages/* whose (name, version) is not on npm yet.
- * With PUBLISH_RENAME ("from=to"), the package is published from a temporary copy whose
- * manifest carries the new name; the repository's package.json is never touched.
+ * With PUBLISH_RENAME ("from=to,from2=to2"), each package is published from a temporary copy
+ * whose manifest carries the new name and renamed sibling dependencies; the repository's
+ * package.json is never touched. Every public package needs a pair, checked before publishing.
  * Pass --dry-run to print what would be published (npm pack --dry-run) without publishing.
  */
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isPublished, renameFor, renameReadme, stagedManifest } from './release-target.js';
+import {
+  isPublished,
+  type Manifest,
+  missingRenames,
+  renameFor,
+  renameReadmeAll,
+  stagedManifest,
+} from './release-target.js';
+
+type Package = Manifest & { version: string; private?: boolean; files?: string[] };
 
 const root = join(import.meta.dirname, '..', 'packages');
 const dryRun = process.argv.includes('--dry-run');
 
+const packages: { dir: string; pkg: Package }[] = [];
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
   const dir = join(root, entry.name);
-  const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
-    name: string;
-    version: string;
-    private?: boolean;
-    files?: string[];
-    scripts?: unknown;
-    devDependencies?: unknown;
-  };
+  packages.push({ dir, pkg: JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) });
+}
+
+const missing = missingRenames(
+  packages.map(({ pkg }) => pkg),
+  process.env,
+);
+if (missing.length > 0) {
+  console.error(`PUBLISH_RENAME has no pair for ${missing.join(', ')}; nothing was published`);
+  process.exit(1);
+}
+
+for (const { dir, pkg } of packages) {
   if (pkg.private) continue;
 
   const name = renameFor(pkg.name, process.env);
@@ -50,11 +66,11 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
       }
       await writeFile(
         join(stage, 'package.json'),
-        JSON.stringify(stagedManifest(pkg, name), null, 2),
+        JSON.stringify(stagedManifest(pkg, name, process.env), null, 2),
       );
-      // The README tells readers to install and import the original name; point it at the new one.
+      // The README tells readers to install and import the original names; point it at the new ones.
       const readme = join(stage, 'README.md');
-      await writeFile(readme, renameReadme(await readFile(readme, 'utf8'), pkg.name, name));
+      await writeFile(readme, renameReadmeAll(await readFile(readme, 'utf8'), process.env));
       cwd = stage;
     }
 
