@@ -91,6 +91,49 @@ A second hook lints and formats the files you staged.
 
 By contributing you agree that your work is licensed under the [MIT License](./LICENSE).
 
+## The Softtor fork (`softtor` branch)
+
+`joao-oliveira-softtor/nestbun` carries the adapter for the Softtor CRM while upstream is unresponsive. Work lands on `softtor` (the fork's default branch, protected: PR required, checks `test (ubuntu-latest, latest)` and `test (macos-latest, latest)`). `main` only mirrors `mguay22/nestbun`. The fork's `Release` (`v*` tags) and `Landing page` workflows are disabled: never push a `v*` tag to the fork.
+
+Upstream PRs already carried in `softtor` (all are ancestors of the branch):
+
+| Upstream PR | Branch                         |
+| ----------- | ------------------------------ |
+| #1          | `test/ecosystem-compat`        |
+| #7          | `fix/warn-ws-upgrade-listener` |
+| #8          | `test/security-hooks`          |
+| #9          | `test/static-last-modified`    |
+| #10         | `test/unix-socket`             |
+| #11         | `test/sse-disconnect`          |
+| #12         | `test/graceful-shutdown`       |
+| #13         | `test/https-options`           |
+| #14         | `test/view-engines`            |
+
+### Syncing with upstream
+
+```bash
+git fetch origin && git checkout main && git merge --ff-only origin/main && git push fork main
+git fetch fork && git checkout -b sync/upstream-YYYY-MM-DD fork/softtor && git merge main   # then run the CI checks
+```
+
+Open the PR against `softtor` and merge it with a **merge commit**, not squash: squash drops the ancestry and every later sync conflicts on the same files. On conflicts (for example upstream squash-merged #7–#14), keep the `softtor` side only after `git diff origin/main softtor -- <file>` shows nothing but known fork differences. `git merge --abort` backs out.
+
+### Releasing the fork (`@softtor/nestbun-platform`)
+
+`scripts/release.ts` tags the commit on the release branch and pushes branch and tag together, but the tag must sit on the squash commit that lands on `softtor`. `release-softtor.yml` only checks that the tag matches `packages/platform/package.json` and that its commit is an ancestor of `origin/softtor`, so a tag on a commit before the squash is rejected, while a tag on any later `softtor` commit would be published: tag the squash commit itself. So:
+
+```bash
+git fetch fork && git checkout -b chore/release-X.Y.Z fork/softtor
+RELEASE_REMOTE=fork RELEASE_BRANCH=chore/release-X.Y.Z RELEASE_TAG_PREFIX=softtor-v \
+  bun run release <patch|minor|X.Y.Z>        # answer "no" to the push; --dry-run previews
+git tag -d softtor-vX.Y.Z
+git push fork chore/release-X.Y.Z            # PR "chore(release): softtor-vX.Y.Z", squash-merge
+git checkout softtor && git pull fork softtor
+git tag softtor-vX.Y.Z && git push fork softtor-vX.Y.Z   # publishes to npm
+```
+
+Without the three `RELEASE_*` variables the script targets `origin/main` and the `v` prefix. The publish needs the `NPM_TOKEN` secret of the `@softtor` scope.
+
 ## Releasing (maintainers)
 
 ```bash
