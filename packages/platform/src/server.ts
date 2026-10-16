@@ -58,6 +58,8 @@ export class BunHttpServer extends EventEmitter {
   bun: Server<unknown> | null = null;
   private unixPath: string | null = null;
   private closing = false;
+  /** Set once shutdown starts, graceful or forced; unlike `closing`, it never adds headers. */
+  private draining = false;
   private upgradeHook: BunUpgradeHook | null = null;
   private readonly sockets = new Set<ServerWebSocket<any>>();
 
@@ -98,7 +100,10 @@ export class BunHttpServer extends EventEmitter {
       ...handler,
       open: (ws) => {
         this.sockets.add(ws);
-        return handler.open?.(ws);
+        const opened = handler.open?.(ws);
+        // An async hook may finish upgrading after shutdown swept the open sockets.
+        if (this.draining) ws.close(1001, 'Server shutting down');
+        return opened;
       },
       close: (ws, code, reason) => {
         this.sockets.delete(ws);
@@ -109,6 +114,7 @@ export class BunHttpServer extends EventEmitter {
 
   listen(port: number | string, hostname?: string, callback?: (err?: Error) => void): this {
     this.closing = false;
+    this.draining = false;
     if (this.bun) {
       const err = new Error('Server is already listening');
       callback ? callback(err) : this.emit('error', err);
@@ -199,6 +205,7 @@ export class BunHttpServer extends EventEmitter {
    */
   private async shutdown(server: Server<unknown>, force: boolean): Promise<void> {
     // 1001 "going away": stop(true) alone drops WebSockets with 1006 and no close frame.
+    this.draining = true;
     for (const ws of this.sockets) ws.close(1001, 'Server shutting down');
     if (!force) {
       this.closing = true;

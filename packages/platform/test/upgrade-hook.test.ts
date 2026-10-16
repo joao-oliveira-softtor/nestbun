@@ -204,4 +204,28 @@ describe('BunHttpServer upgrade hook', () => {
     await closing;
     t = undefined;
   });
+
+  it('closes a socket that an async hook upgrades after shutdown began', async () => {
+    t = await bootstrap(RootModule, {
+      adapter: { serve: { shutdownTimeout: 5_000 } },
+      configure: (_app, adapter) =>
+        serverOf(adapter).setUpgradeHook(
+          upgrading({
+            fetch: async (req, server) => {
+              await Bun.sleep(150);
+              return server.upgrade(req) ? true : new Response('late', { status: 400 });
+            },
+          }),
+        ),
+    });
+    const ws = new WebSocket(wsUrl(t));
+    const code = closed(ws);
+    await Bun.sleep(30); // the hook is now sleeping inside fetch
+    const started = Date.now();
+    await t.close();
+    t = undefined;
+    // Without the late close the drain would wait out the whole 5 s shutdownTimeout.
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect([1001, 1006]).toContain(await code);
+  });
 });
