@@ -39,7 +39,7 @@ export class EventsGateway {
 - `app.close()` closes every socket with code 1001 before the HTTP server stops.
 - Bun's WebSocket settings go in `new BunWsAdapter(app, { websocket: { maxPayloadLength, idleTimeout, backpressureLimit, closeOnBackpressureLimit, sendPings, perMessageDeflate } })`. Defaults: 16 MiB per message, 120 s idle with pings on.
 
-Not supported: gateways on their own port (`@WebSocketGateway(4000)` throws, everything shares the HTTP port), namespaces (use Socket.IO), acknowledgements (`@Ack()` is Socket.IO only), and backpressure handling beyond Bun's `backpressureLimit`. Socket.IO on the same port is planned on top of the same upgrade hook.
+Not supported: gateways on their own port (`@WebSocketGateway(4000)` throws, everything shares the HTTP port), namespaces (use Socket.IO), acknowledgements (`@Ack()` is Socket.IO only), and backpressure handling beyond Bun's `backpressureLimit`. For Socket.IO on the same port, use [`@nestbun/socket.io`](https://www.npmjs.com/package/@nestbun/socket.io).
 
 ## Security
 

@@ -5,7 +5,6 @@ description: What is planned for nestbun after the HTTP adapter.
 
 ## Next
 
-- **Socket.IO on the HTTP port**: `@nestjs/platform-socket.io` gateways on `Bun.serve` through `@socket.io/bun-engine`, on the same upgrade hook as [`@nestbun/ws`](../websockets/).
 - **Multipart uploads**: `@UploadedFile()` / `@UploadedFiles()` backed by `Request.formData()`, with size and count limits.
 
 ## Later
