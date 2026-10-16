@@ -98,6 +98,26 @@
         "@nestjs/core": "^12.0.0",
       },
     },
+    "packages/ws": {
+      "name": "@nestbun/ws",
+      "version": "0.2.0",
+      "devDependencies": {
+        "@nestbun/platform": "workspace:*",
+        "@nestjs/common": "12.1.0",
+        "@nestjs/core": "12.1.0",
+        "@nestjs/testing": "12.1.0",
+        "@nestjs/websockets": "12.1.0",
+        "reflect-metadata": "0.2.2",
+        "rxjs": "7.8.2",
+      },
+      "peerDependencies": {
+        "@nestbun/platform": "0.2.0",
+        "@nestjs/common": "^12.0.0",
+        "@nestjs/core": "^12.0.0",
+        "@nestjs/websockets": "^12.0.0",
+        "rxjs": "^7.1.0",
+      },
+    },
   },
   "packages": {
     "@astrojs/compiler-binding": ["@astrojs/compiler-binding@0.4.1", "", { "optionalDependencies": { "@astrojs/compiler-binding-android-arm64": "0.4.1", "@astrojs/compiler-binding-darwin-arm64": "0.4.1", "@astrojs/compiler-binding-darwin-x64": "0.4.1", "@astrojs/compiler-binding-linux-arm64-gnu": "0.4.1", "@astrojs/compiler-binding-linux-arm64-musl": "0.4.1", "@astrojs/compiler-binding-linux-x64-gnu": "0.4.1", "@astrojs/compiler-binding-linux-x64-musl": "0.4.1", "@astrojs/compiler-binding-wasm32-wasi": "0.4.1", "@astrojs/compiler-binding-win32-arm64-msvc": "0.4.1", "@astrojs/compiler-binding-win32-x64-msvc": "0.4.1" } }, "sha512-ZYVDW1P58OXyxqZbOMp+/2U9KA7y2esIx9r4pWdpZ/l6fCZhaw4ul+D7EgpRVxYLkyTWqzANbTTUFGPFP8zDHA=="],
@@ -367,6 +387,8 @@
     "@nestbun/example-basic": ["@nestbun/example-basic@workspace:examples/basic"],
 
     "@nestbun/platform": ["@nestbun/platform@workspace:packages/platform"],
+
+    "@nestbun/ws": ["@nestbun/ws@workspace:packages/ws"],
 
     "@nestbun/www": ["@nestbun/www@workspace:apps/www"],
 

@@ -114,8 +114,9 @@ export class BunAdapter extends AbstractHttpAdapter<BunHttpServer, BunRequest, B
       this.httpServer.off('newListener', warnOnUpgrade);
       this.logger.warn(
         "A WebSocket adapter is listening for Node's 'upgrade' event, which BunAdapter never emits, " +
-          'so its gateways will not accept connections. @nestjs/platform-ws and @nestjs/platform-socket.io ' +
-          'are not supported yet: https://mguay22.github.io/nestbun/docs/compatibility/',
+          'so its gateways will not accept connections. Use BunWsAdapter from @nestbun/ws instead of ' +
+          '@nestjs/platform-ws; @nestjs/platform-socket.io is not supported yet: ' +
+          'https://mguay22.github.io/nestbun/docs/compatibility/',
       );
     };
     this.httpServer.on('newListener', warnOnUpgrade);
