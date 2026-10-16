@@ -49,6 +49,11 @@ class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { event: 'echo', data };
   }
 
+  @SubscribeMessage('bigint')
+  bigint() {
+    return { event: 'bigint', data: 1n };
+  }
+
   @SubscribeMessage('stream')
   stream(): Observable<WsResponse<number>> {
     return of({ event: 'stream', data: 1 }, { event: 'stream', data: 2 });
@@ -160,6 +165,12 @@ describe('BunWsAdapter', () => {
     ws.send('not json');
     ws.send(JSON.stringify({ event: 'nope', data: 1 }));
     expect(await request(ws, 'echo', 'still')).toEqual({ event: 'echo', data: 'still' });
+  });
+
+  it('drops a reply that cannot be serialized and keeps the socket working', async () => {
+    const ws = await client('/events');
+    ws.send(JSON.stringify({ event: 'bigint' }));
+    expect(await request(ws, 'echo', 'after')).toEqual({ event: 'echo', data: 'after' });
   });
 
   it('routes by path: each gateway gets its own clients', async () => {

@@ -159,7 +159,14 @@ export class BunWsAdapter extends AbstractWsAdapter<any, any> {
         takeUntil(client.data.closed),
       )
       .subscribe((response) => {
-        if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(response));
+        if (client.readyState !== WebSocket.OPEN) return;
+        // An unserializable reply (cycle, BigInt, deep nesting) must drop only itself: an error
+        // thrown in the observer would surface as an unhandled RxJS error and can kill the process.
+        try {
+          client.send(JSON.stringify(response));
+        } catch (err) {
+          this.logger.error(err);
+        }
       });
   }
 
