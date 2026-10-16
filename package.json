@@ -8,9 +8,9 @@
     "bench"
   ],
   "scripts": {
-    "test": "bun test packages/platform packages/create/test scripts",
-    "typecheck": "bun run --filter '@nestbun/platform' --filter '@nestbun/create' --filter '@nestbun/example-basic' typecheck",
-    "build": "bun run --filter '@nestbun/platform' --filter '@nestbun/create' --filter '@nestbun/www' build",
+    "test": "bun test packages/platform packages/ws packages/create/test scripts",
+    "typecheck": "bun run --filter '@nestbun/platform' --filter '@nestbun/ws' --filter '@nestbun/create' --filter '@nestbun/example-basic' typecheck",
+    "build": "bun run --filter '@nestbun/platform' --filter '@nestbun/ws' --filter '@nestbun/create' --filter '@nestbun/www' build",
     "lint": "oxlint --deny-warnings",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

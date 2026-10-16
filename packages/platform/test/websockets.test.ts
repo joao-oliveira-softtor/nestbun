@@ -59,6 +59,7 @@ describe('@nestjs/platform-ws (unsupported)', () => {
 
     expect(upgradeWarnings(logger)).toHaveLength(1);
     expect(upgradeWarnings(logger)[0]).toContain('@nestjs/platform-ws');
+    expect(upgradeWarnings(logger)[0]).toContain('@nestbun/ws');
     expect((await t.json('/')).body).toEqual({ ok: true });
   });
 
