@@ -142,6 +142,24 @@ describe('bumpInternalDeps', () => {
       source.replace('"@nestbun/platform": "0.2.0"', '"@nestbun/platform": "0.3.0"'),
     );
   });
+  test('serve ao bun.lock: leva só o peer do workspace e deixa workspace:* e o mapa de pacotes', () => {
+    const lock = `    "packages/ws": {
+      "name": "@nestbun/ws",
+      "version": "0.3.0",
+      "devDependencies": {
+        "@nestbun/platform": "workspace:*",
+      },
+      "peerDependencies": {
+        "@nestbun/platform": "0.3.0",
+      },
+    },
+  },
+  "packages": {
+    "@nestbun/platform": ["@nestbun/platform@workspace:packages/platform"],`;
+    expect(bumpInternalDeps(lock, ['@nestbun/platform', '@nestbun/ws'], '0.4.0')).toBe(
+      lock.replace('"@nestbun/platform": "0.3.0"', '"@nestbun/platform": "0.4.0"'),
+    );
+  });
   test('não confunde o nome do próprio pacote com uma dependência', () => {
     const own = '{\n  "name": "@nestbun/platform",\n  "version": "0.3.0"\n}';
     expect(bumpInternalDeps(own, ['@nestbun/platform'], '0.3.0')).toBe(own);
