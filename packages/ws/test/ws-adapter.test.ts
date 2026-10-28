@@ -24,7 +24,9 @@ import {
 } from './helpers.js';
 
 const tokens = new WeakMap<BunWsClient, string | null>();
-let disconnects = 0;
+// Token of every client that left. A global count would also catch sockets that earlier tests
+// close in afterEach, which land inside the next test's window.
+const disconnected: (string | null | undefined)[] = [];
 
 class DenyGuard implements CanActivate {
   canActivate() {
@@ -40,8 +42,8 @@ class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     tokens.set(client, upgrade.headers.get('x-token'));
   }
 
-  handleDisconnect() {
-    disconnects++;
+  handleDisconnect(client: BunWsClient) {
+    disconnected.push(tokens.get(client));
   }
 
   @SubscribeMessage('echo')
@@ -194,13 +196,12 @@ describe('BunWsAdapter', () => {
   });
 
   it('calls handleDisconnect when a client leaves', async () => {
-    const before = disconnects;
-    const ws = await connect(t.wsUrl('/events'));
+    const ws = await client('/events', { 'x-token': 'leaving' });
     const done = closed(ws);
     ws.close();
     await done;
-    await until(() => disconnects > before);
-    expect(disconnects).toBe(before + 1);
+    await until(() => disconnected.includes('leaving'));
+    expect(disconnected.filter((token) => token === 'leaving')).toHaveLength(1);
   });
 
   it("sends a WsException's message to the client", async () => {
