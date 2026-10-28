@@ -49,7 +49,9 @@ export interface ServerAddress {
   port: number;
 }
 
-// BunHttpServer's own methods on a prototype that inherits from tls.Server.
+// shortcut: swaps the prototype so core's `instanceof tls.Server` (getUrl https) passes; not a
+// documented API. Upgrade: when core reads the protocol from the options, or Bun.serve can be
+// wrapped by a real tls.Server. Covered by https.test.ts, which fails if this stops working.
 function tlsServerPrototype(): object {
   const proto = Object.create(tls.Server.prototype);
   for (const name of Object.getOwnPropertyNames(BunHttpServer.prototype)) {
@@ -84,7 +86,6 @@ export class BunHttpServer extends EventEmitter {
     private readonly options: BunServeOptions = {},
   ) {
     super();
-    // Core reports https only for a tls.Server (getUrl); Bun.serve has none to extend.
     if (this.options.tls) Object.setPrototypeOf(this, tlsServerPrototype());
   }
 
