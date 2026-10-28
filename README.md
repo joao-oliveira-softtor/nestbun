@@ -3,7 +3,8 @@
 > **Este projeto foi descontinuado.** Não recebe mais atualizações neste repositório.
 >
 > - **Novo repositório:** https://github.com/joao-oliveira-softtor/bunnest
-> - **Biblioteca no npm:** `@softtor/bunnest-*`. Ainda não publicada; o link entra aqui quando estiver no ar.
+> - **Biblioteca no npm:** [`@softtor/bunnest-platform`](https://www.npmjs.com/package/@softtor/bunnest-platform), [`@softtor/bunnest-ws`](https://www.npmjs.com/package/@softtor/bunnest-ws), [`@softtor/bunnest-socket.io`](https://www.npmjs.com/package/@softtor/bunnest-socket.io) e o gerador [`@softtor/create-bunnest`](https://www.npmjs.com/package/@softtor/create-bunnest) (substituem `@softtor/nestbun-*`).
+> - **Documentação:** https://joao-oliveira-softtor.github.io/bunnest/
 
 [![CI](https://github.com/mguay22/nestbun/actions/workflows/ci.yml/badge.svg)](https://github.com/mguay22/nestbun/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@nestbun/platform)](https://www.npmjs.com/package/@nestbun/platform)
