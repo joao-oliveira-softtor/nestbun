@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import tls from 'node:tls';
 import type { Server, ServerWebSocket, TLSOptions, WebSocketHandler } from 'bun';
 
 export type FetchHandler = (
@@ -48,6 +49,21 @@ export interface ServerAddress {
   port: number;
 }
 
+// BunHttpServer's own methods on a prototype that inherits from tls.Server.
+function tlsServerPrototype(): object {
+  const proto = Object.create(tls.Server.prototype);
+  for (const name of Object.getOwnPropertyNames(BunHttpServer.prototype)) {
+    if (name !== 'constructor') {
+      Object.defineProperty(
+        proto,
+        name,
+        Object.getOwnPropertyDescriptor(BunHttpServer.prototype, name)!,
+      );
+    }
+  }
+  return proto;
+}
+
 /**
  * Wraps `Bun.serve()` in the parts of the Node `net.Server` API that Nest's
  * core touches: `listen`, `close`, `address`, and the `'error'`/`'listening'`
@@ -68,6 +84,8 @@ export class BunHttpServer extends EventEmitter {
     private readonly options: BunServeOptions = {},
   ) {
     super();
+    // Core reports https only for a tls.Server (getUrl); Bun.serve has none to extend.
+    if (this.options.tls) Object.setPrototypeOf(this, tlsServerPrototype());
   }
 
   get listening(): boolean {

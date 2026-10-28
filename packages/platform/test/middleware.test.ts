@@ -89,6 +89,14 @@ describe('middleware', () => {
     expect((await t.fetch('/mw/excluded')).headers.get('x-tag')).toBeNull();
   });
 
+  it('exclude() skips the middleware for the case and trailing-slash variants the router serves', async () => {
+    for (const path of ['/MW/EXCLUDED', '/mw/excluded/']) {
+      const r = await t.fetch(path);
+      expect(r.status).toBe(200);
+      expect(r.headers.get('x-tag')).toBeNull();
+    }
+  });
+
   it('next(err) reaches the exception filters', async () => {
     const denied = await t.json('/mw/secret');
     expect(denied.status).toBe(401);
@@ -145,6 +153,9 @@ describe('global prefix', () => {
     const missing = await t.json('/api/missing');
     expect(missing.status).toBe(404);
     expect(missing.body.message).toBe('Cannot GET /api/missing');
+    const wrongMethod = await t.json('/health', { method: 'POST' });
+    expect(wrongMethod.status).toBe(404);
+    expect(wrongMethod.body.message).toBe('Cannot POST /health');
   });
 });
 

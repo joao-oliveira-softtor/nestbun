@@ -57,6 +57,15 @@ describe('httpsOptions', () => {
     expect(await r.json()).toEqual({ protocol: 'https', secure: true });
   });
 
+  it('reports an http URL when the app has no httpsOptions', async () => {
+    const plain = await bootstrap(RootModule);
+    try {
+      expect(plain.url).toStartWith('http://');
+    } finally {
+      await plain.close();
+    }
+  });
+
   it('does not answer plain HTTP on the TLS port', async () => {
     const plain = t.url.replace('https://', 'http://');
     const outcome = await fetch(plain + '/').then(

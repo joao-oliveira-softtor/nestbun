@@ -152,6 +152,11 @@ export class BunAdapter extends AbstractHttpAdapter<BunHttpServer, BunRequest, B
     return true;
   }
 
+  // Same rules the router uses to serve paths, so exclude() skips exactly the requests a route serves.
+  getRouteMatchingOptions() {
+    return { caseSensitive: false, ignoreTrailingSlash: true };
+  }
+
   override setOnRequestHook(hook: OnRequestHook): void {
     this.onRequestHook = hook;
   }
@@ -274,11 +279,20 @@ export class BunAdapter extends AbstractHttpAdapter<BunHttpServer, BunRequest, B
     this.router.use(handler as never);
   }
 
-  override setNotFoundHandler(handler: Function, prefix?: string): void {
+  override setNotFoundHandler(
+    handler: Function,
+    prefix?: string,
+    excludedRoutes: { path: string }[] = [],
+  ): void {
     const normalized = this.normalizePrefix(prefix);
     if (normalized) {
       this.registeredPrefixes.add(normalized);
       this.router.use(normalized, handler as RequestHandler);
+      // Excluded routes sit outside the prefix; their unmatched methods need the same 404.
+      // Core passes them without the leading slash ('health'), hence normalizePrefix.
+      for (const { path } of excludedRoutes) {
+        this.router.use(this.normalizePrefix(path), handler as RequestHandler);
+      }
       return;
     }
     this.router.use((req: BunRequest, res: BunResponse, next: NextFunction) => {
