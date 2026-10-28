@@ -1,5 +1,10 @@
 # nestbun
 
+> **Este projeto foi descontinuado.** Não recebe mais atualizações neste repositório.
+>
+> - **Novo repositório:** https://github.com/joao-oliveira-softtor/bunnest
+> - **Biblioteca no npm:** `@softtor/bunnest-*`. Ainda não publicada; o link entra aqui quando estiver no ar.
+
 [![CI](https://github.com/mguay22/nestbun/actions/workflows/ci.yml/badge.svg)](https://github.com/mguay22/nestbun/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@nestbun/platform)](https://www.npmjs.com/package/@nestbun/platform)
 [![license](https://img.shields.io/npm/l/@nestbun/platform)](./LICENSE)
